@@ -1,0 +1,174 @@
+#define _CRT_SECURE_NO_WARNINGS
+#include <stdio.h>
+#include <string.h>
+#include <stdlib.h>
+
+#define NUM 8
+#define SIZE 1000
+
+struct BaseOfBooks
+{
+	char authur[35];
+	char name[35];
+	int year;
+	int numberOf;
+	double price;
+	struct BaseOfBooks* next;
+};
+struct BaseOfBooks *start = NULL;
+struct BaseOfBooks *start_sort = NULL;
+//вивід списку
+void print_data(struct BaseOfBooks *A, double x, double y)
+{
+	for (A = start; A->next; A = A->next)
+	{
+		if ((A->numberOf < x && A->year < y) || x == -1)
+		{
+			printf("%-25s\t|%-25s\t|%5d|%3d|%5.3lf$|\n", A->authur, A->name, A->year, A->numberOf, A->price);
+			printf("-------------------------------------------------------------------------------------\n");
+		}
+	}
+	printf("\n");
+}
+//видалення структур за певним параметром
+void delete_struct(struct BaseOfBooks *A, int num)
+{
+	A = start;
+	while (1) {
+		struct BaseOfBooks* pp = A;
+
+		A = A->next;
+		if (!A) break;
+		if (A->numberOf == num)
+		{
+			if (!A->next)
+			{
+				pp->next = NULL;
+				break;
+			}
+			pp->next = A->next;
+			free(A);
+			A = pp;
+		}
+	}
+
+	A = start;
+	if (A->numberOf == num) {
+		if (A->next)
+			start = A->next;
+		else start = NULL;
+	}
+}
+//сортування при додаванны новоъ структури
+void add_and_sort(struct BaseOfBooks **A, struct BaseOfBooks *B)
+{
+	if (!(*A)) *A = B;
+	if (!start) { start = *A; return; }
+	*A = start;
+
+	while (1)
+	{
+		if ((*A)->price >= B->price)
+		{
+			B->next = *A;
+			start = B;
+			B = NULL;
+			break;
+		}
+		else if ((*A)->price <= B->price && (*A)->next == NULL)
+		{
+			(*A)->next = B;
+			B = NULL;
+			break;
+		}
+		struct BaseOfBooks* kp = (*A)->next;
+
+		if ((*A)->price <= B->price && kp->price >= B->price)
+		{
+
+			(*A)->next = B;
+			B->next = kp;
+			B = NULL;
+			break;
+		}
+
+
+		(*A) = (*A)->next;
+
+		if (!(*A)->next) break;
+	}
+	if (B)
+	{
+		(*A)->next = B;
+	}
+
+
+}
+
+
+int main()
+{
+	struct BaseOfBooks *p = (struct BaseOfBooks*)malloc(sizeof(struct BaseOfBooks));
+	p = NULL;
+	FILE *file;
+	char array[SIZE];
+	file = fopen("Read_Data.txt", "r");
+	//===========СЧИТУВАННЯ З ФАЙЛУ==========
+	while (fgets(array, SIZE, file))
+	{
+		struct BaseOfBooks *pp = (struct BaseOfBooks*)malloc(sizeof(struct BaseOfBooks));
+		strcpy(pp->authur, strtok(array, ","));
+		strcpy(pp->name, strtok(NULL, ","));
+		pp->year = atoi(strtok(NULL, ","));
+		pp->numberOf = atoi(strtok(NULL, ","));
+		pp->price = atof(strtok(NULL, ","));
+		pp->next = NULL;
+		add_and_sort(&p, pp);
+	}
+	
+	//=======ВИВІД ДАНИХ===============
+	print_data(p, -1, -1);
+	char task;
+	int i = 0;
+	int number_of_page;
+	while (1)
+	{//робимо "меню" де будемо видаляти і добавляти книжки
+		printf("Enter A if you want add struct, D if delete, E to finish program ");
+		if (i != 0)getchar();
+		scanf("%c", &task);
+		i = 1;
+		if (task == 'A')//умова що ми хочемо добавити книжку
+		{
+			printf("\nENTER book with pages < 90 and year < 1980\n\n");
+			getchar();
+			gets_s(array);//считуєм що дані про нову книжку
+			i = 0;
+			struct BaseOfBooks *pt = (struct BaseOfBooks*)malloc(sizeof(struct BaseOfBooks));
+			strcpy(pt->authur, strtok(array, ","));
+			strcpy(pt->name, strtok(NULL, ","));
+			pt->year = atoi(strtok(NULL, ","));
+			pt->numberOf = atoi(strtok(NULL, ","));
+			pt->price = atof(strtok(NULL, ","));
+			pt->next = NULL;
+			if (pt->numberOf < 90 && pt->year < 1980)//перевіряємо чи таку кн. можна записувати
+			{
+				add_and_sort(&p, pt);//добавляємо в відсортований список
+				print_data(p, -1, -1);//виводимо результат
+			}
+			else printf("Wrong data\n");
+		}
+		else if (task == 'D')//вилучення книжки
+		{
+			printf("\nENTER book with pages < 90 and year < 1980\n\n");
+			print_data(p, 90, 1980);//вивід всіх можливих книжок які ми можемо вилучити
+			printf("enter the number of book pages   ");
+			scanf("%d", &number_of_page);
+			printf("\n");
+			delete_struct(p, number_of_page);//видалення за кількістю сторінок
+			print_data(p, -1, -1);
+		}
+		else if (task == 'E') break;//виходимо з "меню"
+
+	}
+	return 0;
+}
